@@ -1,34 +1,47 @@
-import { Component, ViewChild, Input, OnChanges, SimpleChanges, ChangeDetectionStrategy, ChangeDetectorRef, OnDestroy } from '@angular/core';
+import { Component, ViewChild, input, computed, effect, signal } from '@angular/core';
 import { ChartData, ChartType } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartClickType, ChartDataType, ChartHoverType } from '../../shared/types/chart';
-import { Subject, Subscription, debounceTime } from 'rxjs';
 
 @Component({
   selector: 'finance-chart',
   imports: [ BaseChartDirective ],
   standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <canvas
-      baseChart
-      [data]="pieChartData"
-      [type]="pieChartType"
-      [options]="pieChartOptions"
-    >
-    </canvas>
+      <canvas
+        baseChart
+        [data]="pieChartData()"
+        [type]="pieChartType"
+        [options]="pieChartOptions"
+      >
+      </canvas>
   `,
   styleUrl: './chart.component.scss'
 })
-export class ChartComponent implements OnChanges, OnDestroy {
+export class ChartComponent {
   @ViewChild(BaseChartDirective) chart: BaseChartDirective | undefined;
   
-  @Input() chartData: ChartDataType[] = [];
+  // Input signal (Angular 17.2+)
+  chartData = input<ChartDataType[]>([]);
   
-  pieChartData: ChartData<'pie', number[], string | string[]> = {
-    labels: [],
-    datasets: []
-  };
+  // Signal para controlar debounce
+  private debouncedData = signal<ChartDataType[]>([]);
+  
+  // Computed signal que gera dados do gráfico
+  pieChartData = computed(() => {
+    const data = this.debouncedData();
+    
+    return {
+      labels: data.map(item => `${item.label} (${item.value}%)`),
+      datasets: [
+        {
+          data: data.map(item => item.value),
+          backgroundColor: data.map(item => item.color),
+          hoverBackgroundColor: data.map(item => item.color),
+        }
+      ]
+    } as ChartData<'pie', number[], string | string[]>;
+  });
   
   pieChartType: ChartType = 'pie';
   pieChartOptions = {
@@ -41,46 +54,31 @@ export class ChartComponent implements OnChanges, OnDestroy {
     }
   };
 
-  private updateSubject = new Subject<ChartDataType[]>();
-  private subscription?: Subscription;
+  private debounceTimer: any;
 
-  constructor(private cdr: ChangeDetectorRef) {
-    this.subscription = this.updateSubject.pipe(
-      debounceTime(1000)
-    ).subscribe((data) => {
-      this.performChartUpdate(data);
+  constructor() {
+    // Effect para debounce - reage a mudanças no chartData
+    effect(() => {
+      const newData = this.chartData();
+      
+      // Limpa timer anterior
+      if (this.debounceTimer) {
+        clearTimeout(this.debounceTimer);
+      }
+      
+      // Agenda atualização com debounce
+      this.debounceTimer = setTimeout(() => {
+        console.log('Atualizando gráfico após debounce...');
+        this.debouncedData.set([...newData]);
+        
+        // Force chart update
+        setTimeout(() => {
+          if (this.chart) {
+            this.chart.update();
+          }
+        }, 0);
+      }, 1000);
     });
-  }
-
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['chartData'] && this.chartData) {
-      this.updateSubject.next([...this.chartData]);
-    }
-  }
-
-  ngOnDestroy() {
-    this.subscription?.unsubscribe();
-  }
-
-  private performChartUpdate(data: ChartDataType[]) {
-    const filteredData = data.filter(item => item.value > 0);
-    
-    this.pieChartData = {
-      labels: filteredData.map(item => `${item.label} (${item.value}%)`),
-      datasets: [
-        {
-          data: filteredData.map(item => item.value),
-          backgroundColor: filteredData.map(item => item.color),
-          hoverBackgroundColor: filteredData.map(item => item.color)
-        }
-      ]
-    };
-
-    if (this.chart) {
-      this.chart.update();
-    }
-    
-    this.cdr.detectChanges();
   }
 
   public chartClicked({ event, active} : ChartClickType): void {
