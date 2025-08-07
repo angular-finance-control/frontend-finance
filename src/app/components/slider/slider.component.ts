@@ -7,27 +7,34 @@ import { FormsModule } from '@angular/forms';
   imports: [ FormsModule, MatSliderModule ],
   standalone: true,
   template: `
-   <mat-slider
-        class="example-margin"
-        [disabled]="disabled"
-        [max]="max"
-        [min]="min"
-        [step]="step"
-        [id]="id"
-        [discrete]="thumbLabel"
-        [showTickMarks]="showTicks">
-      <input matSliderThumb [(ngModel)]="value" #slider>
-    </mat-slider>`,
+    <div>
+      <p>{{ label }}</p>
+      <mat-slider
+            class="example-margin"
+            [disabled]="disabled"
+            [max]="max"
+            [min]="min"
+            [step]="step"
+            [id]="id"
+            [discrete]="thumbLabel"
+            [showTickMarks]="showTicks">
+          <input matSliderThumb [(ngModel)]="value" #slider>
+        </mat-slider>
+    </div>
+  `,
   styleUrl: './slider.component.scss'
 })
 export class SliderComponent {
-  @Input() id: string = '';
+  @Input() id = '';
   
-  value = 0;
-  max = 100;
-  min = 0;
-  thumbLabel = true;
-  showTicks = false;
-  disabled = false;
-  step = 1;
+  @Input() max = 100;
+  @Input() min = 0;
+  @Input() step = 1;
+  @Input() value = 0;
+  
+  @Input() thumbLabel = true;
+  @Input() showTicks = false;
+  @Input() disabled = false;
+
+  @Input() label = '';
 }
