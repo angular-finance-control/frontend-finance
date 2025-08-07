@@ -10,14 +10,15 @@ import { FormsModule } from '@angular/forms';
     <div>
       <p>{{ label }}</p>
       <mat-slider
-            class="example-margin"
+            class="slider"
             [disabled]="disabled"
             [max]="max"
             [min]="min"
             [step]="step"
             [id]="id"
             [discrete]="thumbLabel"
-            [showTickMarks]="showTicks">
+            [showTickMarks]="showTicks"
+            [displayWith]="formatLabel">
           <input matSliderThumb [(ngModel)]="value" #slider>
         </mat-slider>
     </div>
@@ -37,4 +38,6 @@ export class SliderComponent {
   @Input() disabled = false;
 
   @Input() label = '';
+
+  formatLabel = (value: number) => `${value}%`;
 }

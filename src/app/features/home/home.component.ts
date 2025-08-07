@@ -14,8 +14,9 @@ import { ChartComponent } from '../../components/chart/chart.component';
       </div>
       <div class="right">
         <p>right</p>
-        <finance-slider id="slider1" label="slider1" />
-        <finance-slider id="slider2" label="slider2" />
+        <finance-slider id="slider-1" label="Luxo" />
+        <finance-slider id="slider-2" label="Alimentação" />
+        <finance-slider id="slider-3" label="Contas Fixas" />
       </div>
     </div>
   `,
