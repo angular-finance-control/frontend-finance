@@ -1,5 +1,10 @@
 # Frontend
 
+
+https://valor-software.com/ng2-charts/
+https://material.angular.dev/
+
+
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.15.
 
 ## Development server
