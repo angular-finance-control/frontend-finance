@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { MatSliderModule } from '@angular/material/slider';
 import { FormsModule } from '@angular/forms';
+import { EventEmitterSlider } from '../../shared/types/slider';
 
 @Component({
   selector: 'finance-slider',
@@ -40,7 +41,7 @@ export class SliderComponent {
 
   @Input() label = '';
 
-  @Output() valueChange = new EventEmitter<{value: number, id: string}>();
+  @Output() valueChange = new EventEmitter<EventEmitterSlider>();
 
   formatLabel = (value: number) => `${value}%`;
 

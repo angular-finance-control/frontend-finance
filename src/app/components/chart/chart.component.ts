@@ -1,14 +1,15 @@
-import { Component, ViewChild, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { ChartData, ChartEvent, ChartType } from 'chart.js';
+import { Component, ViewChild, Input, OnChanges, SimpleChanges, ChangeDetectionStrategy, ChangeDetectorRef, OnDestroy } from '@angular/core';
+import { ChartData, ChartType } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
+import { ChartClickType, ChartDataType, ChartHoverType } from '../../shared/types/chart';
+import { Subject, Subscription, debounceTime } from 'rxjs';
 
 @Component({
   selector: 'finance-chart',
   imports: [ BaseChartDirective ],
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <p>chart works!</p>
-
     <canvas
       baseChart
       [data]="pieChartData"
@@ -19,24 +20,17 @@ import { BaseChartDirective } from 'ng2-charts';
   `,
   styleUrl: './chart.component.scss'
 })
-export class ChartComponent implements OnChanges {
+export class ChartComponent implements OnChanges, OnDestroy {
   @ViewChild(BaseChartDirective) chart: BaseChartDirective | undefined;
   
-  @Input() chartData: {label: string, value: number, color: string}[] = [];
+  @Input() chartData: ChartDataType[] = [];
   
   pieChartData: ChartData<'pie', number[], string | string[]> = {
     labels: [],
-    datasets: [
-      {
-        data: [],
-        backgroundColor: [],
-        hoverBackgroundColor: []
-      }
-    ]
+    datasets: []
   };
   
   pieChartType: ChartType = 'pie';
-  
   pieChartOptions = {
     responsive: true,
     plugins: {
@@ -47,15 +41,29 @@ export class ChartComponent implements OnChanges {
     }
   };
 
+  private updateSubject = new Subject<ChartDataType[]>();
+  private subscription?: Subscription;
+
+  constructor(private cdr: ChangeDetectorRef) {
+    this.subscription = this.updateSubject.pipe(
+      debounceTime(1000)
+    ).subscribe((data) => {
+      this.performChartUpdate(data);
+    });
+  }
+
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['chartData']) {
-      this.updateChartData();
+    if (changes['chartData'] && this.chartData) {
+      this.updateSubject.next([...this.chartData]);
     }
   }
 
-  private updateChartData() {
-    // Filtra apenas os dados com valor > 0 para não mostrar fatias vazias
-    const filteredData = this.chartData.filter(item => item.value > 0);
+  ngOnDestroy() {
+    this.subscription?.unsubscribe();
+  }
+
+  private performChartUpdate(data: ChartDataType[]) {
+    const filteredData = data.filter(item => item.value > 0);
     
     this.pieChartData = {
       labels: filteredData.map(item => `${item.label} (${item.value}%)`),
@@ -68,29 +76,18 @@ export class ChartComponent implements OnChanges {
       ]
     };
 
-    // Força a atualização do gráfico
     if (this.chart) {
       this.chart.update();
     }
+    
+    this.cdr.detectChanges();
   }
 
-  public chartClicked({
-    event,
-    active,
-  }: {
-    event: ChartEvent;
-    active: object[];
-  }): void {
+  public chartClicked({ event, active} : ChartClickType): void {
     console.log(event, active);
   }
 
-  public chartHovered({
-    event,
-    active,
-  }: {
-    event: ChartEvent;
-    active: object[];
-  }): void {
+  public chartHovered({ event, active } : ChartHoverType): void {
     console.log(event, active);
   }
 }
