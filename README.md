@@ -2,6 +2,8 @@
 
 
 https://valor-software.com/ng2-charts/
+    https://valor-software.com/ng2-charts/pie
+
 https://material.angular.dev/
 
 
