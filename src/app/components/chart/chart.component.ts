@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { ChartData, ChartEvent, ChartType } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 
@@ -7,51 +7,72 @@ import { BaseChartDirective } from 'ng2-charts';
   imports: [ BaseChartDirective ],
   standalone: true,
   template: `
-    <div class="container">
-      <canvas
-        baseChart
-        [data]="pieChartData"
-        [type]="pieChartType"
-        [options]="pieChartOptions"
-      >
-      </canvas>
-    </div>
+    <p>chart works!</p>
+
+    <canvas
+      baseChart
+      [data]="pieChartData"
+      [type]="pieChartType"
+      [options]="pieChartOptions"
+    >
+    </canvas>
   `,
   styleUrl: './chart.component.scss'
 })
-export class ChartComponent {
+export class ChartComponent implements OnChanges {
   @ViewChild(BaseChartDirective) chart: BaseChartDirective | undefined;
   
+  @Input() chartData: {label: string, value: number, color: string}[] = [];
+  
   pieChartData: ChartData<'pie', number[], string | string[]> = {
-    labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+    labels: [],
     datasets: [
       {
-        data: [300, 50, 100],
-        backgroundColor: [
-          '#FF6384',
-          '#36A2EB',
-          '#FFCE56',
-          '#4BC0C0',
-          '#9966FF',
-          '#FF9900'
-        ],
-        hoverBackgroundColor: [
-          '#FF6384',
-          '#36A2EB',
-          '#FFCE56',
-          '#4BC0C0',
-          '#9966FF',
-          '#FF9900'
-        ]
+        data: [],
+        backgroundColor: [],
+        hoverBackgroundColor: []
       }
     ]
   };
   
-  pieChartType: ChartType = 'pie'; // Tipagem explícita
+  pieChartType: ChartType = 'pie';
   
   pieChartOptions = {
-    responsive: true
+    responsive: true,
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top' as const
+      }
+    }
   };
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['chartData']) {
+      this.updateChartData();
+    }
+  }
+
+  private updateChartData() {
+    // Filtra apenas os dados com valor > 0 para não mostrar fatias vazias
+    const filteredData = this.chartData.filter(item => item.value > 0);
+    
+    this.pieChartData = {
+      labels: filteredData.map(item => `${item.label} (${item.value}%)`),
+      datasets: [
+        {
+          data: filteredData.map(item => item.value),
+          backgroundColor: filteredData.map(item => item.color),
+          hoverBackgroundColor: filteredData.map(item => item.color)
+        }
+      ]
+    };
+
+    // Força a atualização do gráfico
+    if (this.chart) {
+      this.chart.update();
+    }
+  }
 
   public chartClicked({
     event,
