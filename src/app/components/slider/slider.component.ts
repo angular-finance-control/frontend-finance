@@ -1,24 +1,27 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { MatSliderModule } from '@angular/material/slider';
 import { FormsModule } from '@angular/forms';
+import { EventEmitterSlider } from '../../shared/types/slider';
 
 @Component({
   selector: 'finance-slider',
   imports: [ FormsModule, MatSliderModule ],
   standalone: true,
   template: `
-    <div>
+    <div class="slider-container">
       <p>{{ label }}</p>
       <mat-slider
-            class="example-margin"
+            class="slider"
             [disabled]="disabled"
             [max]="max"
             [min]="min"
             [step]="step"
             [id]="id"
             [discrete]="thumbLabel"
-            [showTickMarks]="showTicks">
-          <input matSliderThumb [(ngModel)]="value" #slider>
+            [showTickMarks]="showTicks"
+            [displayWith]="formatLabel"
+            [style.width.px]="sliderWidth">
+          <input matSliderThumb [(ngModel)]="value" #slider (ngModelChange)="valueChange.emit({value: $event, id: id})">
         </mat-slider>
     </div>
   `,
@@ -37,4 +40,14 @@ export class SliderComponent {
   @Input() disabled = false;
 
   @Input() label = '';
+
+  @Output() valueChange = new EventEmitter<EventEmitterSlider>();
+
+  formatLabel = (value: number) => `${value}%`;
+
+  get sliderWidth(): number {
+    const minWidth = 96;
+    const maxWidth = 320;
+    return minWidth + ((this.max / 100) * (maxWidth - minWidth));
+  }
 }
