@@ -21,13 +21,10 @@ import { ChartClickType, ChartDataType, ChartHoverType } from '../../shared/type
 export class ChartComponent {
   @ViewChild(BaseChartDirective) chart: BaseChartDirective | undefined;
   
-  // Input signal (Angular 17.2+)
   chartData = input<ChartDataType[]>([]);
   
-  // Signal para controlar debounce
   private debouncedData = signal<ChartDataType[]>([]);
   
-  // Computed signal que gera dados do gráfico
   pieChartData = computed(() => {
     const data = this.debouncedData();
     
@@ -57,21 +54,16 @@ export class ChartComponent {
   private debounceTimer: any;
 
   constructor() {
-    // Effect para debounce - reage a mudanças no chartData
     effect(() => {
       const newData = this.chartData();
       
-      // Limpa timer anterior
       if (this.debounceTimer) {
         clearTimeout(this.debounceTimer);
       }
       
-      // Agenda atualização com debounce
       this.debounceTimer = setTimeout(() => {
-        console.log('Atualizando gráfico após debounce...');
         this.debouncedData.set([...newData]);
         
-        // Force chart update
         setTimeout(() => {
           if (this.chart) {
             this.chart.update();

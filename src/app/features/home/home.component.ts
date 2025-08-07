@@ -13,6 +13,9 @@ import { ChartDataType } from '../../shared/types/chart';
   template: `
     <div class="container">
       <h2>Financeiro</h2>
+
+      <p>Este é um projeto com fins de estudo</p>
+      
       <div class="container-data">
         <div class="left">
           <finance-chart [chartData]="chartData()" />
@@ -35,22 +38,18 @@ import { ChartDataType } from '../../shared/types/chart';
   styleUrl: './home.component.scss'
 })
 export class HomeComponent {
-  // Signal principal com os dados dos sliders
   private sliders = signal<Slider[]>([
     { id: 'slider-1', label: 'Luxo', value: 0, disabled: false, max: 100, color: '#FF6384' },
     { id: 'slider-2', label: 'Alimentação', value: 0, disabled: false, max: 100, color: '#36A2EB' },
     { id: 'slider-3', label: 'Contas Fixas', value: 0, disabled: false, max: 100, color: '#FFCE56' }
   ]);
 
-  // Computed que calcula o total automaticamente
   private total = computed(() => 
     this.sliders().reduce((sum, slider) => sum + slider.value, 0)
   );
 
-  // Computed que calcula a sobra automaticamente
   private remaining = computed(() => 100 - this.total());
 
-  // Computed que atualiza os valores máximos dos sliders
   slidersWithMaxUpdated = computed(() => {
     const remainingValue = this.remaining();
     
@@ -60,17 +59,15 @@ export class HomeComponent {
     }));
   });
 
-  // Computed para dados do gráfico (incluindo sobra)
   chartData = computed(() => {
     const baseData: ChartDataType[] = this.sliders()
-      .filter(slider => slider.value > 0) // Só sliders com valor
+      .filter(slider => slider.value > 0)
       .map(slider => ({
         label: slider.label,
         value: slider.value,
         color: slider.color
       }));
 
-    // Adiciona sobra se existir
     const remainingValue = this.remaining();
     if (remainingValue > 0) {
       baseData.push({
@@ -86,7 +83,6 @@ export class HomeComponent {
   handleSliderChange(event: EventEmitterSlider) {
     const { id, value } = event;
     
-    // Atualiza o signal com nova referência
     this.sliders.update(currentSliders => 
       currentSliders.map(slider => 
         slider.id === id 
@@ -94,12 +90,5 @@ export class HomeComponent {
           : slider
       )
     );
-    
-    // ✅ Não precisa de mais nada! 
-    // Os computed signals atualizam automaticamente:
-    // - total() recalcula
-    // - remaining() recalcula  
-    // - slidersWithMaxUpdated() recalcula
-    // - chartData() recalcula
   }
 }
