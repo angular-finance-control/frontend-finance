@@ -52,3 +52,7 @@ https://material.angular.dev/
 [computed] => is a function that returns a value based on the state of the application, if is a new update is made, the computed is updated
 [effect] => was added when the signal is updated, it can be used to perform side effects
 [input] => is a reactive brother of @Input()
+
+
+## Link Firebase
+https://angular-proj-study.web.app/
