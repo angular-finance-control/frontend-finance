@@ -1,0 +1,29 @@
+.container-menu-top {
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(13, 128, 191, 0.1);
+  width: 100%;
+}
+
+.left, .center, .right {
+  flex: 1;
+}
+
+.left {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+}
+
+.logo {
+  width: 50px;
+  height: 50px;
+}
+
+.title {
+  margin: 0;
+}

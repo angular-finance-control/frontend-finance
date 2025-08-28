@@ -8,6 +8,6 @@ export interface Slider {
 }
 
 export interface EventEmitterSlider {
-    value: number;
+    value: number | string;
     id: string;
 }
