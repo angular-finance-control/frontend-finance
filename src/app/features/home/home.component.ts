@@ -5,17 +5,52 @@ import { CommonModule } from '@angular/common';
 import { Slider } from '../../shared/types/slider';
 import { EventEmitterSlider } from '../../shared/types/slider';
 import { ChartDataType } from '../../shared/types/chart';
+import { InputTextComponent } from "../../components/inputs/text/input-text.component";
+import { TopComponent } from '../../components/menus/top/top.component';
 
 @Component({
   selector: 'finance-home',
-  imports: [SliderComponent, ChartComponent, CommonModule],
+  imports: [ 
+    SliderComponent, 
+    ChartComponent, 
+    CommonModule, 
+    InputTextComponent, 
+    TopComponent],
   standalone: true,
   template: `
     <div class="container">
-      <h2>Financeiro</h2>
+      <finance-menu-top/>
 
-      <p>Este é um projeto com fins de estudo</p>
+      <p>Este é um projeto com fins de estudo de programação</p>
+      <p>Insira os gastos abaixo em cada categoria</p>
+
+      <div class="container-inputs-values">
+        <finance-input-text 
+          label="Luxo" 
+          placeholder="R$ 0,00"
+          inputId="totalLuxo" 
+          [useCurrency]="true"
+          (valueChange)="handleInputChange($event)" 
+          [debounceTime]="1000"/>
+        
+        <finance-input-text 
+          label="Alimentação" 
+          placeholder="R$ 0,00"
+          inputId="totalAlimentacao" 
+          [useCurrency]="true"
+          (valueChange)="handleInputChange($event)" 
+          [debounceTime]="1000"/>
+        
+        <finance-input-text 
+          label="Contas Fixas" 
+          placeholder="R$ 0,00"
+          inputId="totalContasFixas" 
+          [useCurrency]="true"
+          (valueChange)="handleInputChange($event)" 
+          [debounceTime]="1000"/>
+      </div>
       
+      <p>Gráfico dos gastos</p>
       <div class="container-data">
         <div class="left">
           <finance-chart [chartData]="chartData()" />
@@ -86,9 +121,16 @@ export class HomeComponent {
     this.sliders.update(currentSliders => 
       currentSliders.map(slider => 
         slider.id === id 
-          ? { ...slider, value }
+          ? { ...slider, value: Number(value) }
           : slider
       )
     );
+  }
+
+  handleInputChange(event: EventEmitterSlider) {
+    const { id, value } = event;
+    
+    console.log('handleInputChange');
+    console.log(id, value);
   }
 }
