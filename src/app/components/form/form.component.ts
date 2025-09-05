@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, SimpleChanges, OnChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { InputTextComponent } from '../inputs/text/input-text.component';
@@ -35,7 +35,7 @@ import { CURRENCY_CONFIGS, CurrencyConfig } from '../../shared/configs/currency.
           [placeholder]="config.selectInput?.placeholder || 'Selecione o tipo'"
           [name]="'expenseType'"
           [items]="typeOptions"
-          formControlName="type"
+          [formControlName]="config.selectInput?.key || 'type'"
       />
 
       <finance-button 
@@ -59,8 +59,8 @@ export class FormComponent implements OnInit {
   @Input() resetAfterSubmit = true;
   @Input() currencyType: keyof typeof CURRENCY_CONFIGS = 'BRL_EXPENSES';
 
-  @Output() formSubmit = new EventEmitter<FormData>();
-  @Output() formChange = new EventEmitter<FormData>();
+  @Output() formSubmit = new EventEmitter<any>();
+  @Output() formChange = new EventEmitter<any>();
   @Output() formValid = new EventEmitter<boolean>();
 
   expenseForm: FormGroup = new FormGroup({});
@@ -98,28 +98,27 @@ export class FormComponent implements OnInit {
   }
 
   onSubmit() {
-    if (this.expenseForm.valid) {
-      const formData: FormData = {
-        value: Number(this.expenseForm.value.value),
-        description: this.expenseForm.value.description,
-        type: this.expenseForm.value.type
-      };
 
-      this.formSubmit.emit(formData);
+    if (this.expenseForm.valid) {
+      this.formSubmit.emit(this.expenseForm.value);
 
       if (this.resetAfterSubmit) {
         this.resetForm();
       }
-    } 
-
-    this.expenseForm.markAllAsTouched();
+    } else {
+      this.expenseForm.markAllAsTouched();
+    }
   }
 
   resetForm() {
-    this.expenseForm.reset({
-      value: 0,
-      description: '',
-      type: this.typeOptions.length > 0 ? this.typeOptions[0].value : ''
+    const resetValue: any = {};
+    
+    this.config.inputs?.forEach(input => {
+      resetValue[input.key] = input.useCurrency ? 0 : '';
     });
+
+    this.config.selectInput?.key && (resetValue[this.config.selectInput.key] = '');
+    
+    this.expenseForm.reset(resetValue);
   }
 }
