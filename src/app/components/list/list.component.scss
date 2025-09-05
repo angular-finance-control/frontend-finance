@@ -1,0 +1,34 @@
+.list {
+    width: 600px;
+    margin: 20px auto;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+::ng-deep .mdc-list-item__primary-text {
+    display: flex;
+    align-items: center;
+}
+
+.list-icon, .delete-icon {
+    width: 50px;
+    font-size: 24px;
+    color: #36A2EB;
+}
+
+.delete-icon {
+    color: #FF6384;
+    cursor: pointer;
+}
+
+.list-value {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.no-items {
+    text-align: center;
+    color: #666;
+}
+

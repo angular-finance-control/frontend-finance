@@ -1,21 +1,26 @@
 import { Component, computed, signal } from '@angular/core';
-import { SliderComponent } from '../../components/slider/slider.component';
 import { ChartComponent } from '../../components/chart/chart.component';
 import { CommonModule } from '@angular/common';
-import { Slider } from '../../shared/types/slider';
-import { EventEmitterSlider } from '../../shared/types/slider';
 import { ChartDataType } from '../../shared/types/chart';
-import { InputTextComponent } from "../../components/inputs/text/input-text.component";
 import { TopComponent } from '../../components/menus/top/top.component';
+import { SelectItems } from '../../shared/types/select';
+import { FormComponent } from "../../components/form/form.component";
+import { FormConfig, FormData } from "../../shared/types/formData";
+import { ListComponent } from '../../components/list/list.component';
+import { List, ListType } from '../../shared/types/list';
+import { formConfig } from './config/config';
+import { iconHelper } from '../../shared/utils/helper/icon.helper';
+import { colorChartHelper } from '../../shared/utils/helper/color-chart.helper';
 
 @Component({
   selector: 'finance-home',
-  imports: [ 
-    SliderComponent, 
-    ChartComponent, 
-    CommonModule, 
-    InputTextComponent, 
-    TopComponent],
+  imports: [
+    ChartComponent,
+    CommonModule,
+    TopComponent,
+    FormComponent,
+    ListComponent
+  ],
   standalone: true,
   template: `
     <div class="container">
@@ -25,47 +30,23 @@ import { TopComponent } from '../../components/menus/top/top.component';
       <p>Insira os gastos abaixo em cada categoria</p>
 
       <div class="container-inputs-values">
-        <finance-input-text 
-          label="Luxo" 
-          placeholder="R$ 0,00"
-          inputId="totalLuxo" 
-          [useCurrency]="true"
-          (valueChange)="handleInputChange($event)" 
-          [debounceTime]="1000"/>
-        
-        <finance-input-text 
-          label="Alimentação" 
-          placeholder="R$ 0,00"
-          inputId="totalAlimentacao" 
-          [useCurrency]="true"
-          (valueChange)="handleInputChange($event)" 
-          [debounceTime]="1000"/>
-        
-        <finance-input-text 
-          label="Contas Fixas" 
-          placeholder="R$ 0,00"
-          inputId="totalContasFixas" 
-          [useCurrency]="true"
-          (valueChange)="handleInputChange($event)" 
-          [debounceTime]="1000"/>
+        <finance-expense-form
+          [typeOptions]="expenseTypeOptions"
+          [config]="formConfig"
+          [isLoading]="isProcessing()"
+          (formSubmit)="onExpenseSubmit($event)"
+        />
       </div>
+
+      <finance-list 
+        [items]="list()" 
+        (listUpdate)="updateList($event)"
+      />
       
       <p>Gráfico dos gastos</p>
       <div class="container-data">
         <div class="left">
           <finance-chart [chartData]="chartData()" />
-        </div>
-        <div class="right">
-          @for (slider of slidersWithMaxUpdated(); track slider.id) {
-            <finance-slider 
-              [id]="slider.id" 
-              [label]="slider.label" 
-              [value]="slider.value" 
-              [max]="slider.max"
-              [disabled]="slider.disabled" 
-              (valueChange)="handleSliderChange($event)"
-            />
-          }
         </div>
       </div>
     </div>
@@ -73,64 +54,79 @@ import { TopComponent } from '../../components/menus/top/top.component';
   styleUrl: './home.component.scss'
 })
 export class HomeComponent {
-  private sliders = signal<Slider[]>([
-    { id: 'slider-1', label: 'Luxo', value: 0, disabled: false, max: 100, color: '#FF6384' },
-    { id: 'slider-2', label: 'Alimentação', value: 0, disabled: false, max: 100, color: '#36A2EB' },
-    { id: 'slider-3', label: 'Contas Fixas', value: 0, disabled: false, max: 100, color: '#FFCE56' }
+  expenseTypeOptions: SelectItems[] = [
+    { value: ListType.LUXO, viewValue: 'Luxo' },
+    { value: ListType.ALIMENTACAO, viewValue: 'Alimentação' },
+    { value: ListType.CONTAS_FIXAS, viewValue: 'Contas Fixas' }
+  ];
+
+  formConfig: FormConfig = formConfig;
+  isProcessing = signal<boolean>(false);
+  lastExpense = signal<FormData | null>(null);
+
+  list = signal<List[]>([
+    { type: ListType.LUXO, value: 12345, icon: 'shopping_cart' },
+    { type: ListType.ALIMENTACAO, value: 12345, icon: 'diamond_shone' },
+    { type: ListType.CONTAS_FIXAS, value: 123456, icon: 'wallet' }
   ]);
 
-  private total = computed(() => 
-    this.sliders().reduce((sum, slider) => sum + slider.value, 0)
-  );
-
-  private remaining = computed(() => 100 - this.total());
-
-  slidersWithMaxUpdated = computed(() => {
-    const remainingValue = this.remaining();
-    
-    return this.sliders().map(slider => ({
-      ...slider,
-      max: Math.min(100, Math.max(slider.value, slider.value + remainingValue))
-    }));
-  });
-
   chartData = computed(() => {
-    const baseData: ChartDataType[] = this.sliders()
-      .filter(slider => slider.value > 0)
-      .map(slider => ({
-        label: slider.label,
-        value: slider.value,
-        color: slider.color
-      }));
+    const groupedData = this.list()
+      .filter(item => item.value > 0)
+      .reduce((acc, item) => {
 
-    const remainingValue = this.remaining();
-    if (remainingValue > 0) {
-      baseData.push({
-        label: 'Sobra',
-        value: remainingValue,
-        color: '#FFFFFF'
-      });
-    }
-
-    return baseData;
+        console.log('computed')
+        const existingItem = acc.find(group => group.label === item.type);
+        
+        if (existingItem) {
+          existingItem.value += item.value;
+        } else {
+          acc.push({
+            label: item.type,
+            value: item.value,
+            color: colorChartHelper(item.type)
+          });
+        }
+        
+        return acc;
+      }, [] as ChartDataType[]);
+  
+    return groupedData;
   });
 
-  handleSliderChange(event: EventEmitterSlider) {
-    const { id, value } = event;
+  onExpenseSubmit(expenseData: FormData) {
+    this.isProcessing.set(true);
+
+    this.list.update((currentList: List[]) => [
+      ...currentList, 
+      { 
+        type: expenseData.type as ListType, 
+        value: expenseData.value, 
+        icon: iconHelper(expenseData.type as ListType) 
+      }
+    ]);
     
-    this.sliders.update(currentSliders => 
-      currentSliders.map(slider => 
-        slider.id === id 
-          ? { ...slider, value: Number(value) }
-          : slider
-      )
+    setTimeout(() => {
+      this.lastExpense.set(expenseData);
+      this.isProcessing.set(false);
+    }, 500);
+  }
+
+  updateList(updatedList: List[]) {
+    this.list.set([...updatedList]);
+  }
+
+  removeItem(index: number) {
+    this.list.update(currentList => 
+      currentList.filter((_, i) => i !== index)
     );
   }
 
-  handleInputChange(event: EventEmitterSlider) {
-    const { id, value } = event;
-    
-    console.log('handleInputChange');
-    console.log(id, value);
+  clearList() {
+    this.list.set([]);
+  }
+
+  getTotalValue(): number {
+    return this.list().reduce((sum, item) => sum + item.value, 0);
   }
 }

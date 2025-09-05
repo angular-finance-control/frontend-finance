@@ -9,7 +9,7 @@ import { Component } from '@angular/core';
       <img src="/assets/logo.png" alt="logo" class="logo">
     </div>
     <div class="center">
-      <h2 class="title">Controle de gastos</h2>
+      <h2 class="title">Gráfico de gastos</h2>
     </div>
     <div class="right"></div>
   </div>
