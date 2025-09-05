@@ -14,6 +14,7 @@ import { CurrencyPipe } from '@angular/common';
         <mat-list-item class="list-item">
           <mat-icon class="list-icon">{{ item.icon }}</mat-icon>
           <mat-list-item class="list-value">{{ item.type }}</mat-list-item>
+          <mat-list-item class="list-value">{{ item.description }}</mat-list-item>
           <mat-list-item class="list-value">{{ item.value | currency: 'BRL' : 'symbol' : '1.2-2' }}</mat-list-item>
           <mat-icon class="list-icon delete-icon" (click)="deleteItem($index)">delete</mat-icon>
         </mat-list-item>

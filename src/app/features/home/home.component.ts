@@ -8,7 +8,7 @@ import { FormComponent } from "../../components/form/form.component";
 import { FormConfig, FormData } from "../../shared/types/formData";
 import { ListComponent } from '../../components/list/list.component';
 import { List, ListType } from '../../shared/types/list';
-import { formConfig } from './config/config';
+import { formConfig } from './config/form-config';
 import { iconHelper } from '../../shared/utils/helper/icon.helper';
 import { colorChartHelper } from '../../shared/utils/helper/color-chart.helper';
 
@@ -96,6 +96,7 @@ export class HomeComponent {
       { 
         type: expenseData.type as ListType, 
         value: expenseData.value, 
+        description: expenseData.description,
         icon: iconHelper(expenseData.type as ListType) 
       }
     ]);

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, SimpleChanges, OnChanges } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { InputTextComponent } from '../inputs/text/input-text.component';
@@ -19,23 +19,23 @@ import { CURRENCY_CONFIGS, CurrencyConfig } from '../../shared/configs/currency.
   ],
   template: `
     <form [formGroup]="expenseForm" (ngSubmit)="onSubmit()" class="form">
-      
-      <finance-input-text 
-        [label]="config.valueLabel || 'Valor'"
-        [placeholder]="config.valuePlaceholder || 'R$ 0,00'"
-        [inputId]="'expenseValue'"
-        [useCurrency]="config.showCurrency ?? true"
-        [currencyConfig]="currencyConfiguration"
-        [debounceTime]="config.debounceTime || 1000"
-        formControlName="value"
-      />
-
-      <finance-select
-        [label]="config.typeLabel || 'Tipo'"
-        [placeholder]="config.typePlaceholder || 'Selecione o tipo'"
-        [name]="'expenseType'"
-        [items]="typeOptions"
-        formControlName="type"
+      @for (item of config.inputs; track $index) {
+        <finance-input-text 
+          [label]="item.label"
+          [placeholder]="item.placeholder"
+          [inputId]="item.inputId"
+          [useCurrency]="item.useCurrency"
+          [currencyConfig]="item.currencyConfig? item.currencyConfig : currencyConfiguration"
+          [debounceTime]="item.debounceTime"
+          [formControlName]="item.key"
+        />
+      }  
+        <finance-select
+          [label]="config.selectInput?.label || 'Tipo'"
+          [placeholder]="config.selectInput?.placeholder || 'Selecione o tipo'"
+          [name]="'expenseType'"
+          [items]="typeOptions"
+          formControlName="type"
       />
 
       <finance-button 
@@ -63,17 +63,16 @@ export class FormComponent implements OnInit {
   @Output() formChange = new EventEmitter<FormData>();
   @Output() formValid = new EventEmitter<boolean>();
 
-  expenseForm: FormGroup;
+  expenseForm: FormGroup = new FormGroup({});
 
   get currencyConfiguration(): CurrencyConfig {
     return CURRENCY_CONFIGS[this.currencyType];
   }
 
-  constructor(private fb: FormBuilder) {
-    this.expenseForm = this.createForm();
-  }
+  constructor(private fb: FormBuilder) {}
 
   ngOnInit() {    
+    this.expenseForm = this.createForm();
     if (this.initialValue) {
       this.expenseForm.patchValue(this.initialValue);
     }
@@ -88,16 +87,21 @@ export class FormComponent implements OnInit {
   }
 
   private createForm(): FormGroup {
-    return this.fb.group({
-      value: [ 0, [ Validators.required ]],
-      type: ['', Validators.required]
+    const formControls: { [key: string]: any } = {};
+
+    this.config.inputs?.forEach(input => {
+      formControls[input.key] = ['', Validators.required];
     });
+
+    this.config.selectInput?.key && (formControls[this.config.selectInput.key] = ['', Validators.required]);
+    return this.fb.group(formControls);
   }
 
   onSubmit() {
     if (this.expenseForm.valid) {
       const formData: FormData = {
         value: Number(this.expenseForm.value.value),
+        description: this.expenseForm.value.description,
         type: this.expenseForm.value.type
       };
 
@@ -114,6 +118,7 @@ export class FormComponent implements OnInit {
   resetForm() {
     this.expenseForm.reset({
       value: 0,
+      description: '',
       type: this.typeOptions.length > 0 ? this.typeOptions[0].value : ''
     });
   }
