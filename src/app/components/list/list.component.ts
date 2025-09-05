@@ -1,7 +1,7 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
-import { List, ListType } from '../../shared/types/list';
+import { List } from '../../shared/types/list';
 import { CurrencyPipe } from '@angular/common';
 
 @Component({
@@ -14,7 +14,7 @@ import { CurrencyPipe } from '@angular/common';
         <mat-list-item class="list-item">
           <mat-icon class="list-icon">{{ item.icon }}</mat-icon>
           <mat-list-item class="list-value">{{ item.type }}</mat-list-item>
-          <mat-list-item class="list-value">{{ item.value / 100 | currency: 'BRL' : 'symbol' : '1.2-2' }}</mat-list-item>
+          <mat-list-item class="list-value">{{ item.value | currency: 'BRL' : 'symbol' : '1.2-2' }}</mat-list-item>
           <mat-icon class="list-icon delete-icon" (click)="deleteItem($index)">delete</mat-icon>
         </mat-list-item>
       }

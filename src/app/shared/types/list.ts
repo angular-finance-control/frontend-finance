@@ -7,5 +7,6 @@ export enum ListType {
 export interface List {
     type: ListType;
     value: number;
+    description?: string;
     icon?: string;
 }

@@ -43,7 +43,6 @@ import { colorChartHelper } from '../../shared/utils/helper/color-chart.helper';
         (listUpdate)="updateList($event)"
       />
       
-      <p>Gráfico dos gastos</p>
       <div class="container-data">
         <div class="left">
           <finance-chart [chartData]="chartData()" />
@@ -64,18 +63,13 @@ export class HomeComponent {
   isProcessing = signal<boolean>(false);
   lastExpense = signal<FormData | null>(null);
 
-  list = signal<List[]>([
-    { type: ListType.LUXO, value: 12345, icon: 'shopping_cart' },
-    { type: ListType.ALIMENTACAO, value: 12345, icon: 'diamond_shone' },
-    { type: ListType.CONTAS_FIXAS, value: 123456, icon: 'wallet' }
-  ]);
+  list = signal<List[]>([]);
 
   chartData = computed(() => {
     const groupedData = this.list()
       .filter(item => item.value > 0)
       .reduce((acc, item) => {
-
-        console.log('computed')
+        
         const existingItem = acc.find(group => group.label === item.type);
         
         if (existingItem) {

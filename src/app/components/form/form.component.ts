@@ -6,6 +6,7 @@ import { SelectComponent } from '../inputs/select/select.component';
 import { ButtonComponent } from '../button/button.component';
 import { SelectItems } from '../../shared/types/select';
 import { FormConfig, FormData } from '../../shared/types/formData';
+import { CURRENCY_CONFIGS, CurrencyConfig } from '../../shared/configs/currency.config';
 
 @Component({
   selector: 'finance-expense-form',
@@ -17,16 +18,14 @@ import { FormConfig, FormData } from '../../shared/types/formData';
     ButtonComponent
   ],
   template: `
-    <form 
-      [formGroup]="expenseForm" 
-      (ngSubmit)="onSubmit()" 
-      [style]="containerStyles">
+    <form [formGroup]="expenseForm" (ngSubmit)="onSubmit()" class="form">
       
       <finance-input-text 
         [label]="config.valueLabel || 'Valor'"
         [placeholder]="config.valuePlaceholder || 'R$ 0,00'"
         [inputId]="'expenseValue'"
         [useCurrency]="config.showCurrency ?? true"
+        [currencyConfig]="currencyConfiguration"
         [debounceTime]="config.debounceTime || 1000"
         formControlName="value"
       />
@@ -45,33 +44,36 @@ import { FormConfig, FormData } from '../../shared/types/formData';
         [disabled]="expenseForm.invalid || isLoading"
         [color]="'primary'"
       />
+
     </form>
   `,
-  standalone: true,
-  styleUrl: './form.component.scss'
+  styleUrl: './form.component.scss',
+  standalone: true
 })
 export class FormComponent implements OnInit {
   @Input() typeOptions: SelectItems[] = [];
   @Input() config: FormConfig = {};
   @Input() initialValue: FormData | null = null;
-  @Input() isLoading: boolean = false;
-  @Input() showValidationErrors: boolean = true;
-  @Input() resetAfterSubmit: boolean = true;
+  @Input() isLoading = false;
+  @Input() showValidationErrors = true;
+  @Input() resetAfterSubmit = true;
+  @Input() currencyType: keyof typeof CURRENCY_CONFIGS = 'BRL_EXPENSES';
 
   @Output() formSubmit = new EventEmitter<FormData>();
   @Output() formChange = new EventEmitter<FormData>();
   @Output() formValid = new EventEmitter<boolean>();
 
   expenseForm: FormGroup;
-  containerStyles: string = '';
+
+  get currencyConfiguration(): CurrencyConfig {
+    return CURRENCY_CONFIGS[this.currencyType];
+  }
 
   constructor(private fb: FormBuilder) {
     this.expenseForm = this.createForm();
   }
 
-  ngOnInit() {
-    this.containerStyles = this.config.containerStyles || 'display: flex; flex-flow: row wrap; gap: 10px;';
-    
+  ngOnInit() {    
     if (this.initialValue) {
       this.expenseForm.patchValue(this.initialValue);
     }
@@ -86,10 +88,8 @@ export class FormComponent implements OnInit {
   }
 
   private createForm(): FormGroup {
-    const minValue = this.config.minValue || 0.01;
-    
     return this.fb.group({
-      value: [0, [Validators.required, Validators.min(minValue)]],
+      value: [ 0, [ Validators.required ]],
       type: ['', Validators.required]
     });
   }
@@ -106,9 +106,9 @@ export class FormComponent implements OnInit {
       if (this.resetAfterSubmit) {
         this.resetForm();
       }
-    } else {
-      this.expenseForm.markAllAsTouched();
-    }
+    } 
+
+    this.expenseForm.markAllAsTouched();
   }
 
   resetForm() {
@@ -116,9 +116,5 @@ export class FormComponent implements OnInit {
       value: 0,
       type: this.typeOptions.length > 0 ? this.typeOptions[0].value : ''
     });
-  }
-
-  isValid(): boolean {
-    return this.expenseForm.valid;
   }
 }

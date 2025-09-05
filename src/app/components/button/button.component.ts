@@ -5,14 +5,17 @@ import { MatButtonModule } from '@angular/material/button';
   selector: 'finance-button',
   imports: [MatButtonModule],
   template: `
-    <button 
-      mat-raised-button 
-      [type]="type" 
-      [disabled]="disabled"
-      [color]="color">
-      {{ text }}
-    </button>
-  `,
+    <div class="button-container">
+      <button 
+        mat-raised-button 
+        [type]="type" 
+        [disabled]="disabled"
+        [color]="color"
+        class="button">
+        {{ text }}
+      </button>
+    </div>
+    `,
   styleUrl: './button.component.scss',
   standalone: true
 })

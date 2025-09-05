@@ -1,26 +1,47 @@
 import { Component, Input, forwardRef } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
+import { CurrencyMaskModule } from 'ng2-currency-mask';
+import { CurrencyConfig } from '../../../shared/configs/currency.config';
 
 @Component({
   selector: 'finance-input-text',
-  imports: [MatFormFieldModule, MatInputModule, ReactiveFormsModule],
+  imports: [
+    MatFormFieldModule, 
+    MatInputModule, 
+    ReactiveFormsModule,
+    FormsModule,
+    CurrencyMaskModule
+  ],
   template: `
     <mat-form-field [appearance]="appearance">
       <mat-label>{{ label }}</mat-label>
-      <input 
-        matInput 
-        [placeholder]="placeholder"
-        [id]="inputId"
-        [value]="value"
-        (input)="onInput($event)"
-        (blur)="onBlur()"
-        [type]="useCurrency ? 'number' : 'text'"
-        [step]="useCurrency ? '0.01' : undefined"
-        [min]="useCurrency ? '0' : undefined"
-      />
+      
+      @if (useCurrency) {
+        <input 
+          matInput
+          [placeholder]="placeholder"
+          [id]="inputId"
+          [(ngModel)]="value"
+          (ngModelChange)="onValueChange($event)"
+          (blur)="onBlur()"
+          currencyMask
+          [options]="currencyOptions"
+          type="text"
+        />
+      } @else {
+        <input 
+          matInput 
+          [placeholder]="placeholder"
+          [id]="inputId"
+          [value]="value"
+          (input)="onInput($event)"
+          (blur)="onBlur()"
+          type="text"
+        />
+      }
     </mat-form-field>
   `,
   styleUrl: './input-text.component.scss',
@@ -40,20 +61,34 @@ export class InputTextComponent implements ControlValueAccessor {
   @Input() inputId: string = 'input';
   @Input() useCurrency: boolean = false;
   @Input() debounceTime: number = 300;
+  @Input() currencyConfig: CurrencyConfig = {};
 
   value: string | number = '';
   
   private onChange = (value: any) => {};
   private onTouched = () => {};
 
-  onInput(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    let value: string | number = target.value;
-    
-    if (this.useCurrency) {
-      value = parseFloat(value) || 0;
-    }
-    
+  get currencyOptions() {
+    const { align, allowNegative, decimal, precision, prefix, suffix, thousands } = this.currencyConfig;
+
+    return {
+      align: align || 'right',
+      allowNegative: allowNegative ?? false,
+      decimal: decimal || ',',
+      precision: precision ?? 2,
+      prefix: prefix || 'R$ ',
+      suffix: suffix || '',
+      thousands: thousands || '.',
+    };
+  }
+
+  onInput({ target }: Event): void {
+    const value = (target as HTMLInputElement).value;
+    this.value = value;
+    this.onChange(value);
+  }
+  
+  onValueChange(value: number): void {
     this.value = value;
     this.onChange(value);
   }
@@ -63,7 +98,11 @@ export class InputTextComponent implements ControlValueAccessor {
   }
 
   writeValue(value: any): void {
-    this.value = value || (this.useCurrency ? 0 : '');
+    if (this.useCurrency) {
+      this.value = typeof value === 'number' ? value : (parseFloat(value) || 0);
+    }
+
+    this.value = value || '';
   }
 
   registerOnChange(fn: (value: any) => void): void {
