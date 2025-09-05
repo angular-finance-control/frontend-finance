@@ -8,13 +8,17 @@ import { ChartClickType, ChartDataType, ChartHoverType } from '../../shared/type
   imports: [ BaseChartDirective ],
   standalone: true,
   template: `
-      <canvas
-        baseChart
-        [data]="pieChartData()"
-        [type]="pieChartType"
-        [options]="pieChartOptions"
-      >
-      </canvas>
+    @if(chartData().length > 0) {
+        <canvas
+          baseChart
+          [data]="pieChartData()"
+          [type]="pieChartType"
+          [options]="pieChartOptions"
+        >
+        </canvas>
+    } @else {
+        <p class="no-data">Esperando os dados para gerar o gráfico</p>
+    }
   `,
   styleUrl: './chart.component.scss'
 })

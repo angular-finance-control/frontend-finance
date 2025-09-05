@@ -4,10 +4,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
 import { SelectItems } from '../../../shared/types/select';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'finance-select',
-  imports: [MatFormFieldModule, MatSelectModule, ReactiveFormsModule],
+  imports: [MatFormFieldModule, MatSelectModule, ReactiveFormsModule, FormsModule],
   template: `
     <mat-form-field [appearance]="appearance">
       <mat-label>{{ label }}</mat-label>

@@ -8,7 +8,7 @@ import { FormComponent } from "../../components/form/form.component";
 import { FormConfig, FormData } from "../../shared/types/formData";
 import { ListComponent } from '../../components/list/list.component';
 import { List, ListType } from '../../shared/types/list';
-import { formConfig } from './config/config';
+import { formConfig } from './config/form-config';
 import { iconHelper } from '../../shared/utils/helper/icon.helper';
 import { colorChartHelper } from '../../shared/utils/helper/color-chart.helper';
 
@@ -43,7 +43,6 @@ import { colorChartHelper } from '../../shared/utils/helper/color-chart.helper';
         (listUpdate)="updateList($event)"
       />
       
-      <p>Gráfico dos gastos</p>
       <div class="container-data">
         <div class="left">
           <finance-chart [chartData]="chartData()" />
@@ -64,18 +63,13 @@ export class HomeComponent {
   isProcessing = signal<boolean>(false);
   lastExpense = signal<FormData | null>(null);
 
-  list = signal<List[]>([
-    { type: ListType.LUXO, value: 12345, icon: 'shopping_cart' },
-    { type: ListType.ALIMENTACAO, value: 12345, icon: 'diamond_shone' },
-    { type: ListType.CONTAS_FIXAS, value: 123456, icon: 'wallet' }
-  ]);
+  list = signal<List[]>([]);
 
   chartData = computed(() => {
     const groupedData = this.list()
       .filter(item => item.value > 0)
       .reduce((acc, item) => {
-
-        console.log('computed')
+        
         const existingItem = acc.find(group => group.label === item.type);
         
         if (existingItem) {
@@ -102,6 +96,7 @@ export class HomeComponent {
       { 
         type: expenseData.type as ListType, 
         value: expenseData.value, 
+        description: expenseData.description,
         icon: iconHelper(expenseData.type as ListType) 
       }
     ]);

@@ -6,6 +6,7 @@ import { SelectComponent } from '../inputs/select/select.component';
 import { ButtonComponent } from '../button/button.component';
 import { SelectItems } from '../../shared/types/select';
 import { FormConfig, FormData } from '../../shared/types/formData';
+import { CURRENCY_CONFIGS, CurrencyConfig } from '../../shared/configs/currency.config';
 
 @Component({
   selector: 'finance-expense-form',
@@ -17,26 +18,24 @@ import { FormConfig, FormData } from '../../shared/types/formData';
     ButtonComponent
   ],
   template: `
-    <form 
-      [formGroup]="expenseForm" 
-      (ngSubmit)="onSubmit()" 
-      [style]="containerStyles">
-      
-      <finance-input-text 
-        [label]="config.valueLabel || 'Valor'"
-        [placeholder]="config.valuePlaceholder || 'R$ 0,00'"
-        [inputId]="'expenseValue'"
-        [useCurrency]="config.showCurrency ?? true"
-        [debounceTime]="config.debounceTime || 1000"
-        formControlName="value"
-      />
-
-      <finance-select
-        [label]="config.typeLabel || 'Tipo'"
-        [placeholder]="config.typePlaceholder || 'Selecione o tipo'"
-        [name]="'expenseType'"
-        [items]="typeOptions"
-        formControlName="type"
+    <form [formGroup]="expenseForm" (ngSubmit)="onSubmit()" class="form">
+      @for (item of config.inputs; track $index) {
+        <finance-input-text 
+          [label]="item.label"
+          [placeholder]="item.placeholder"
+          [inputId]="item.inputId"
+          [useCurrency]="item.useCurrency"
+          [currencyConfig]="item.currencyConfig? item.currencyConfig : currencyConfiguration"
+          [debounceTime]="item.debounceTime"
+          [formControlName]="item.key"
+        />
+      }  
+        <finance-select
+          [label]="config.selectInput?.label || 'Tipo'"
+          [placeholder]="config.selectInput?.placeholder || 'Selecione o tipo'"
+          [name]="'expenseType'"
+          [items]="typeOptions"
+          [formControlName]="config.selectInput?.key || 'type'"
       />
 
       <finance-button 
@@ -45,33 +44,35 @@ import { FormConfig, FormData } from '../../shared/types/formData';
         [disabled]="expenseForm.invalid || isLoading"
         [color]="'primary'"
       />
+
     </form>
   `,
-  standalone: true,
-  styleUrl: './form.component.scss'
+  styleUrl: './form.component.scss',
+  standalone: true
 })
 export class FormComponent implements OnInit {
   @Input() typeOptions: SelectItems[] = [];
   @Input() config: FormConfig = {};
   @Input() initialValue: FormData | null = null;
-  @Input() isLoading: boolean = false;
-  @Input() showValidationErrors: boolean = true;
-  @Input() resetAfterSubmit: boolean = true;
+  @Input() isLoading = false;
+  @Input() showValidationErrors = true;
+  @Input() resetAfterSubmit = true;
+  @Input() currencyType: keyof typeof CURRENCY_CONFIGS = 'BRL_EXPENSES';
 
-  @Output() formSubmit = new EventEmitter<FormData>();
-  @Output() formChange = new EventEmitter<FormData>();
+  @Output() formSubmit = new EventEmitter<any>();
+  @Output() formChange = new EventEmitter<any>();
   @Output() formValid = new EventEmitter<boolean>();
 
-  expenseForm: FormGroup;
-  containerStyles: string = '';
+  expenseForm: FormGroup = new FormGroup({});
 
-  constructor(private fb: FormBuilder) {
-    this.expenseForm = this.createForm();
+  get currencyConfiguration(): CurrencyConfig {
+    return CURRENCY_CONFIGS[this.currencyType];
   }
 
-  ngOnInit() {
-    this.containerStyles = this.config.containerStyles || 'display: flex; flex-flow: row wrap; gap: 10px;';
-    
+  constructor(private fb: FormBuilder) {}
+
+  ngOnInit() {    
+    this.expenseForm = this.createForm();
     if (this.initialValue) {
       this.expenseForm.patchValue(this.initialValue);
     }
@@ -86,22 +87,20 @@ export class FormComponent implements OnInit {
   }
 
   private createForm(): FormGroup {
-    const minValue = this.config.minValue || 0.01;
-    
-    return this.fb.group({
-      value: [0, [Validators.required, Validators.min(minValue)]],
-      type: ['', Validators.required]
+    const formControls: { [key: string]: any } = {};
+
+    this.config.inputs?.forEach(input => {
+      formControls[input.key] = ['', Validators.required];
     });
+
+    this.config.selectInput?.key && (formControls[this.config.selectInput.key] = ['', Validators.required]);
+    return this.fb.group(formControls);
   }
 
   onSubmit() {
-    if (this.expenseForm.valid) {
-      const formData: FormData = {
-        value: Number(this.expenseForm.value.value),
-        type: this.expenseForm.value.type
-      };
 
-      this.formSubmit.emit(formData);
+    if (this.expenseForm.valid) {
+      this.formSubmit.emit(this.expenseForm.value);
 
       if (this.resetAfterSubmit) {
         this.resetForm();
@@ -112,13 +111,14 @@ export class FormComponent implements OnInit {
   }
 
   resetForm() {
-    this.expenseForm.reset({
-      value: 0,
-      type: this.typeOptions.length > 0 ? this.typeOptions[0].value : ''
+    const resetValue: any = {};
+    
+    this.config.inputs?.forEach(input => {
+      resetValue[input.key] = input.useCurrency ? 0 : '';
     });
-  }
 
-  isValid(): boolean {
-    return this.expenseForm.valid;
+    this.config.selectInput?.key && (resetValue[this.config.selectInput.key] = '');
+    
+    this.expenseForm.reset(resetValue);
   }
 }
